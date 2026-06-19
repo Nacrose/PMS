@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from './services/api';   // ✅ NEW: import the centralized API client
 import RateAnalysisPage from './RateAnalysisPage';
 import './App.css';
 
@@ -25,16 +25,14 @@ function App() {
     const [showTagModal, setShowTagModal] = useState(false);
     const [newTag, setNewTag] = useState({ name: '', color: '#808080', description: '' });
 
-    // Use your Render backend URL here
-    const API = 'https://pms-backend-5roi.onrender.com';
-
     const fetchData = async () => {
         setLoading(true);
         try {
+            // ✅ All calls now use `api` – no hardcoded base URL
             const [itemsRes, unitsRes, tagsRes] = await Promise.all([
-                axios.get(`${API}/boq`),
-                axios.get(`${API}/units`),
-                axios.get(`${API}/tags`).catch(() => ({ data: [] }))
+                api.get('/boq'),
+                api.get('/units'),
+                api.get('/tags').catch(() => ({ data: [] }))
             ]);
             setItems(itemsRes.data);
             setUnits(unitsRes.data);
@@ -65,7 +63,7 @@ function App() {
         const val = editValue[id]?.[field];
         if (val === undefined) return;
         try {
-            await axios.put(`${API}/boq/${id}`, { [field]: val });
+            await api.put(`/boq/${id}`, { [field]: val });
             setEditingId(null);
             await fetchData();
         } catch (e) {
@@ -85,7 +83,7 @@ function App() {
     const deleteItem = async (id) => {
         if (!window.confirm('Delete this item?')) return;
         try {
-            await axios.delete(`${API}/boq/${id}`);
+            await api.delete(`/boq/${id}`);
             await fetchData();
         } catch (e) {
             alert('Delete failed');
@@ -110,7 +108,7 @@ function App() {
                 alert('Please fill all fields');
                 return;
             }
-            await axios.post(`${API}/boq`, {
+            await api.post('/boq', {
                 item_code: newRow.item_code,
                 description: newRow.description,
                 unit_id: newRow.unit_id,
@@ -132,7 +130,7 @@ function App() {
     const addUnit = async (e) => {
         e.preventDefault();
         try {
-            await axios.post(`${API}/units`, newUnit);
+            await api.post('/units', newUnit);
             await fetchData();
             setNewUnit({ name: '', symbol: '', category: 'Custom' });
             setShowUnitModal(false);
@@ -143,7 +141,7 @@ function App() {
     const deleteUnit = async (id) => {
         if (!window.confirm('Delete this unit?')) return;
         try {
-            await axios.delete(`${API}/units/${id}`);
+            await api.delete(`/units/${id}`);
             await fetchData();
         } catch (e) { alert(e.response?.data?.error || 'Failed to delete unit'); }
     };
@@ -152,7 +150,7 @@ function App() {
     const addTag = async (e) => {
         e.preventDefault();
         try {
-            await axios.post(`${API}/tags`, newTag);
+            await api.post('/tags', newTag);
             await fetchData();
             setNewTag({ name: '', color: '#808080', description: '' });
             setShowTagModal(false);
@@ -163,7 +161,7 @@ function App() {
     const deleteTag = async (id) => {
         if (!window.confirm('Delete this tag?')) return;
         try {
-            await axios.delete(`${API}/tags/${id}`);
+            await api.delete(`/tags/${id}`);
             await fetchData();
         } catch (e) { alert(e.response?.data?.error || 'Failed to delete tag'); }
     };
@@ -171,7 +169,7 @@ function App() {
     // ---- Assign Tag to BOQ ----
     const assignTag = async (boqId, tagId) => {
         try {
-            await axios.post(`${API}/tags/assign`, { boq_id: boqId, tag_id: tagId });
+            await api.post('/tags/assign', { boq_id: boqId, tag_id: tagId });
             await fetchData();
         } catch (e) {
             console.error('Assign tag failed:', e);
@@ -180,7 +178,7 @@ function App() {
 
     const removeTag = async (boqId, tagId) => {
         try {
-            await axios.delete(`${API}/tags/remove/${boqId}/${tagId}`);
+            await api.delete(`/tags/remove/${boqId}/${tagId}`);
             await fetchData();
         } catch (e) {
             console.error('Remove tag failed:', e);

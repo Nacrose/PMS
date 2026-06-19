@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from './services/api';   // ✅ NEW: import the centralized API client
 import './RateAnalysisPage.css';
 
 function RateAnalysisPage({ onBack }) {
@@ -16,8 +16,6 @@ function RateAnalysisPage({ onBack }) {
     const [newUnit, setNewUnit] = useState({ name: '', symbol: '', category: 'Custom' });
     const [newType, setNewType] = useState('');
 
-    const API = 'https://pms-backend-5roi.onrender.com/api';
-
     useEffect(() => {
         loadData();
     }, []);
@@ -26,9 +24,9 @@ function RateAnalysisPage({ onBack }) {
         setLoading(true);
         try {
             const [boqRes, unitsRes, typesRes] = await Promise.all([
-                axios.get(`${API}/boq`),
-                axios.get(`${API}/units`),
-                axios.get(`${API}/component-types`).catch(() => ({ data: [] }))
+                api.get('/boq'),
+                api.get('/units'),
+                api.get('/component-types').catch(() => ({ data: [] }))
             ]);
             setItems(boqRes.data);
             setUnits(unitsRes.data);
@@ -42,9 +40,9 @@ function RateAnalysisPage({ onBack }) {
 
     const loadAnalysis = async (itemId) => {
         try {
-            const res = await axios.get(`${API}/rate-analysis/boq/${itemId}`);
+            const res = await api.get(`/rate-analysis/boq/${itemId}`);
             setAnalysisData(prev => ({ ...prev, [itemId]: res.data }));
-            const calc = await axios.get(`${API}/rate-analysis/${res.data.id}/calculate`);
+            const calc = await api.get(`/rate-analysis/${res.data.id}/calculate`);
             setCalculatedRates(prev => ({ ...prev, [itemId]: calc.data }));
             return res.data;
         } catch (e) {
@@ -56,7 +54,7 @@ function RateAnalysisPage({ onBack }) {
     const createAnalysis = async (itemId) => {
         try {
             const item = items.find(i => i.id === itemId);
-            await axios.post(`${API}/rate-analysis/boq/${itemId}`, {
+            await api.post(`/rate-analysis/boq/${itemId}`, {
                 name: `${item.item_code} Rate Analysis`,
                 description: `Rate analysis for ${item.description}`,
                 overhead_percent: 5,
@@ -94,7 +92,7 @@ function RateAnalysisPage({ onBack }) {
             return;
         }
         try {
-            await axios.post(`${API}/rate-analysis/${analysisId}/components`, {
+            await api.post(`/rate-analysis/${analysisId}/components`, {
                 component_type: comp.component_type || 'Material',
                 name: comp.name,
                 unit_id: comp.unit_id,
@@ -113,7 +111,7 @@ function RateAnalysisPage({ onBack }) {
     const deleteComponent = async (compId, itemId) => {
         if (!window.confirm('Delete this component?')) return;
         try {
-            await axios.delete(`${API}/rate-analysis/components/${compId}`);
+            await api.delete(`/rate-analysis/components/${compId}`);
             await loadAnalysis(itemId);
         } catch (e) {
             alert('Failed to delete component');
@@ -122,7 +120,7 @@ function RateAnalysisPage({ onBack }) {
 
     const updateComponent = async (compId, field, value, itemId) => {
         try {
-            await axios.put(`${API}/rate-analysis/components/${compId}`, {
+            await api.put(`/rate-analysis/components/${compId}`, {
                 [field]: field === 'quantity_per_unit' || field === 'rate' ? parseFloat(value) : value
             });
             await loadAnalysis(itemId);
@@ -133,7 +131,7 @@ function RateAnalysisPage({ onBack }) {
 
     const updateAnalysisSetting = async (analysisId, field, value, itemId) => {
         try {
-            await axios.put(`${API}/rate-analysis/${analysisId}`, { [field]: parseFloat(value) });
+            await api.put(`/rate-analysis/${analysisId}`, { [field]: parseFloat(value) });
             await loadAnalysis(itemId);
         } catch (e) {
             alert('Failed to update');
@@ -144,7 +142,7 @@ function RateAnalysisPage({ onBack }) {
     const addUnit = async (e) => {
         e.preventDefault();
         try {
-            await axios.post(`${API}/units`, newUnit);
+            await api.post('/units', newUnit);
             await loadData();
             setNewUnit({ name: '', symbol: '', category: 'Custom' });
             setShowUnitModal(false);
@@ -154,7 +152,7 @@ function RateAnalysisPage({ onBack }) {
     const deleteUnit = async (id) => {
         if (!window.confirm('Delete unit?')) return;
         try {
-            await axios.delete(`${API}/units/${id}`);
+            await api.delete(`/units/${id}`);
             await loadData();
         } catch (e) { alert(e.response?.data?.error || 'Failed'); }
     };
@@ -164,7 +162,7 @@ function RateAnalysisPage({ onBack }) {
         e.preventDefault();
         try {
             if (!newType || types.includes(newType)) { alert('Unique type name required'); return; }
-            await axios.post(`${API}/component-types`, { name: newType });
+            await api.post('/component-types', { name: newType });
             setTypes([...types, newType]);
             setNewType('');
             setShowTypeModal(false);
@@ -174,7 +172,7 @@ function RateAnalysisPage({ onBack }) {
     const deleteType = async (name) => {
         if (!window.confirm(`Delete type "${name}"?`)) return;
         try {
-            await axios.delete(`${API}/component-types/${name}`);
+            await api.delete(`/component-types/${name}`);
             setTypes(types.filter(t => t !== name));
         } catch (e) { alert(e.response?.data?.error || 'Failed'); }
     };
@@ -183,7 +181,7 @@ function RateAnalysisPage({ onBack }) {
     const copyAnalysis = async (sourceId, targetId) => {
         if (!window.confirm(`Copy analysis from ${items.find(i => i.id === sourceId)?.item_code} to ${items.find(i => i.id === targetId)?.item_code}?`)) return;
         try {
-            await axios.post(`${API}/rate-analysis/copy/${sourceId}/to/${targetId}`);
+            await api.post(`/rate-analysis/copy/${sourceId}/to/${targetId}`);
             await loadAnalysis(targetId);
             alert('Analysis copied successfully!');
         } catch (e) {
