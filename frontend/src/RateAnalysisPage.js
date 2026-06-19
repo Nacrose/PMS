@@ -15,10 +15,8 @@ function RateAnalysisPage({ onBack }) {
     const [showTypeModal, setShowTypeModal] = useState(false);
     const [newUnit, setNewUnit] = useState({ name: '', symbol: '', category: 'Custom' });
     const [newType, setNewType] = useState('');
-    const [editingComp, setEditingComp] = useState(null);
-    const [editCompData, setEditCompData] = useState({});
 
-    const API = 'https://pms-backend-5roi.onrender.com';
+    const API = 'https://pms-backend-5roi.onrender.com/api';
 
     useEffect(() => {
         loadData();
@@ -82,11 +80,6 @@ function RateAnalysisPage({ onBack }) {
             await loadAnalysis(itemId);
         }
         setExpandedItem(itemId);
-    };
-
-    const getUnitSymbol = (id) => {
-        const u = units.find(u => u.id === id);
-        return u ? u.symbol : id;
     };
 
     const formatCurrency = (val) => {
