@@ -26,7 +26,7 @@ function App() {
     const [newTag, setNewTag] = useState({ name: '', color: '#808080', description: '' });
 
     // Use your Render backend URL here
-    const API = 'https://pms-backend.onrender.com/api';
+    const API = 'https://pms-backend-5roi.onrender.com';
 
     const fetchData = async () => {
         setLoading(true);

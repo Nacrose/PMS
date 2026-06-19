@@ -2,18 +2,15 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../config/database');
 
-// GET all units
 router.get('/', async (req, res) => {
     try {
         const result = await pool.query('SELECT * FROM units ORDER BY name');
         res.json(result.rows);
     } catch (err) {
-        console.error(err);
         res.status(500).json({ error: err.message });
     }
 });
 
-// POST create new unit
 router.post('/', async (req, res) => {
     try {
         const { name, symbol, category } = req.body;
@@ -23,12 +20,10 @@ router.post('/', async (req, res) => {
         );
         res.status(201).json(result.rows[0]);
     } catch (err) {
-        console.error(err);
         res.status(500).json({ error: err.message });
     }
 });
 
-// DELETE unit
 router.delete('/:id', async (req, res) => {
     try {
         const { id } = req.params;
@@ -39,7 +34,6 @@ router.delete('/:id', async (req, res) => {
         await pool.query('DELETE FROM units WHERE id = $1', [id]);
         res.json({ message: 'Unit deleted' });
     } catch (err) {
-        console.error(err);
         res.status(500).json({ error: err.message });
     }
 });

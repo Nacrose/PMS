@@ -18,7 +18,7 @@ function RateAnalysisPage({ onBack }) {
     const [editingComp, setEditingComp] = useState(null);
     const [editCompData, setEditCompData] = useState({});
 
-    const API = 'https://pms-backend.onrender.com/api';
+    const API = 'https://pms-backend-5roi.onrender.com';
 
     useEffect(() => {
         loadData();
